@@ -6,11 +6,11 @@ Dockter Hermes keeps the Hermes checkout untouched. Local machine settings live 
 
 ## Install
 
-Clone or copy this repository to:
+Clone [dhoman/dockter-hermes](https://github.com/dhoman/dockter-hermes) to:
 
 ```sh
 mkdir -p ~/.hermes
-git clone <repo-url> ~/.hermes/dockter-hermes
+git clone https://github.com/dhoman/dockter-hermes ~/.hermes/dockter-hermes
 ```
 
 If you copied the files manually instead of cloning, make the helper executable:
@@ -89,18 +89,18 @@ dockter-hermes-start
 
 | Command | Description |
 | --- | --- |
-| `dockter-hermes-start [gateway|dashboard|all]` | Start containers. Defaults to `all`. |
+| `dockter-hermes-start [gateway\|dashboard\|all]` | Start containers. Defaults to `all`. |
 | `dockter-hermes-stop` | Stop the compose stack. |
-| `dockter-hermes-restart [gateway|dashboard|all]` | Restart containers. Defaults to `gateway`. |
+| `dockter-hermes-restart [gateway\|dashboard\|all]` | Restart containers. Defaults to `gateway`. |
 | `dockter-hermes-status` | Check compose status and Hermes-looking Docker containers. |
-| `dockter-hermes-logs [gateway|dashboard|all] [docker logs args]` | View live logs. Defaults to `gateway`. |
+| `dockter-hermes-logs [gateway\|dashboard\|all] [docker logs args]` | View live logs. Defaults to `gateway`. |
 
 ### Container Access
 
 | Command | Description |
 | --- | --- |
-| `dockter-hermes-shell [gateway|dashboard]` | Open a Bash shell in a container. Defaults to `gateway`. |
-| `dockter-hermes-exec [gateway|dashboard] <command>` | Run a command inside a running container. Defaults to `gateway`. |
+| `dockter-hermes-shell [gateway\|dashboard]` | Open a Bash shell in a container. Defaults to `gateway`. |
+| `dockter-hermes-exec [gateway\|dashboard] <command>` | Run a command inside a running container. Defaults to `gateway`. |
 | `dockter-hermes-cli <args>` | Run `hermes` arguments in a one-off gateway container. |
 | `dockter-hermes-chat` | Open interactive Hermes chat through the gateway container. |
 | `dockter-hermes-setup` | Run the Hermes setup wizard in a one-off gateway container. |
@@ -128,7 +128,7 @@ dockter-hermes-start
 | Command | Description |
 | --- | --- |
 | `dockter-hermes-update` | Pull latest source, rebuild the gateway image, and recreate containers. |
-| `dockter-hermes-rebuild [gateway|dashboard|all]` | Rebuild the gateway image and force-recreate containers. Defaults to `all`. |
+| `dockter-hermes-rebuild [gateway\|dashboard\|all]` | Rebuild the gateway image and force-recreate containers. Defaults to `all`. |
 | `dockter-hermes-clean` | Remove compose containers and volumes after confirmation. |
 
 ## Configuration Files
