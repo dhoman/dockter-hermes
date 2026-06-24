@@ -1,0 +1,42 @@
+# Copy this file to ~/.hermes/dockter-hermes/docker-compose.override.yml
+# and edit it for your machine.
+#
+# This example keeps the upstream Hermes checkout untouched while adding:
+# - an optional prefix proxy for Tailscale Serve at /hermes
+# - API server loopback config for gateway health checks
+# - dashboard binding suitable for authenticated reverse-proxy/Tailscale use
+# - optional workspace bind mounts
+
+services:
+  hermes-prefix-proxy:
+    image: hermes-agent
+    container_name: hermes-prefix-proxy
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ~/.hermes/dockter-hermes/hermes-prefix-proxy.py:/usr/local/bin/hermes-prefix-proxy.py:ro
+    environment:
+      - HERMES_PREFIX_PROXY_PREFIX=${HERMES_PREFIX_PROXY_PREFIX:-/hermes}
+      - HERMES_PREFIX_PROXY_TARGET=${HERMES_PREFIX_PROXY_TARGET:-http://127.0.0.1:${DOCKTER_HERMES_DASHBOARD_PORT:-9119}}
+      - HERMES_PREFIX_PROXY_HOST=${HERMES_PREFIX_PROXY_HOST:-127.0.0.1}
+      - HERMES_PREFIX_PROXY_PORT=${HERMES_PREFIX_PROXY_PORT:-9120}
+    entrypoint: ["/opt/hermes/.venv/bin/python", "/usr/local/bin/hermes-prefix-proxy.py"]
+
+  gateway:
+    depends_on:
+      - hermes-prefix-proxy
+    environment:
+      - API_SERVER_ENABLED=true
+      - API_SERVER_HOST=127.0.0.1
+    # Optional host workspace mount. Edit or remove.
+    # volumes:
+    #   - ${HOME}/ai-workspace:/workspace/ai-workspace:rw
+
+  dashboard:
+    network_mode: host
+    environment:
+      - GATEWAY_HEALTH_URL=http://127.0.0.1:${DOCKTER_HERMES_API_PORT:-8642}/health/detailed
+    # Optional host workspace mount. Edit or remove.
+    # volumes:
+    #   - ${HOME}/ai-workspace:/workspace/ai-workspace:rw
+    command: ["dashboard", "--host", "0.0.0.0", "--port", "${DOCKTER_HERMES_DASHBOARD_PORT:-9119}", "--no-open", "--tui"]

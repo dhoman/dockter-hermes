@@ -1,0 +1,2 @@
+# Copy this file to ~/.hermes/dockter-hermes/config and edit the path.
+DOCKTER_HERMES_DIR="/path/to/hermes-agent"

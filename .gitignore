@@ -1,0 +1,15 @@
+# Local machine config/state
+config
+docker-compose.override.yml
+
+# Old local helper artifact; not used by the current s6-based Hermes image
+dashboard-entrypoint.sh
+
+# OS/editor noise
+.DS_Store
+*.swp
+*.swo
+
+# Runtime/test scratch
+*.log
+tmp/
