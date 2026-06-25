@@ -7,6 +7,9 @@ Browser path:
 Backend path:
   /sessions
 
+Tailscale Serve strips the configured mount path before proxying, so this proxy
+also accepts already-stripped paths such as /sessions.
+
 The X-Forwarded-Prefix header lets Hermes generate prefixed redirects,
 cookie paths, asset URLs, API URLs, and websocket URLs.
 """
@@ -37,12 +40,12 @@ HOP_BY_HOP = {
 }
 
 
-def strip_prefix(path: str) -> str | None:
+def strip_prefix(path: str) -> str:
     if path == PREFIX:
         return "/"
     if path.startswith(PREFIX + "/"):
         return path[len(PREFIX):] or "/"
-    return None
+    return path or "/"
 
 
 def target_url(request: web.Request, backend_path: str) -> str:
@@ -151,8 +154,6 @@ async def proxy_ws(request: web.Request, backend_path: str) -> web.WebSocketResp
 
 async def handle(request: web.Request) -> web.StreamResponse:
     backend_path = strip_prefix(request.rel_url.path)
-    if backend_path is None:
-        raise web.HTTPNotFound(text=f"Expected path under {PREFIX}")
     if request.headers.get("upgrade", "").lower() == "websocket":
         return await proxy_ws(request, backend_path)
     return await proxy_http(request, backend_path)
