@@ -202,6 +202,73 @@ tailscale serve status
 
 Before exposing the dashboard beyond localhost, enable Hermes dashboard authentication in `~/.hermes/config.yaml`.
 
+### How to enable Hermes dashboard authentication
+
+Hermes includes a username/password dashboard auth provider. Configure it under the `dashboard.basic_auth` block:
+
+```yaml
+dashboard:
+  basic_auth:
+    username: "your-username"
+    password_hash: "scrypt$..."
+    password: ""
+    secret: "random-session-signing-secret"
+    session_ttl_seconds: 43200
+```
+
+Fields:
+
+| Field | Purpose | How to set it |
+| --- | --- | --- |
+| `username` | Username for the dashboard login page. | Pick any username. |
+| `password_hash` | Scrypt hash of your dashboard password. | Generate it with the command below. Do not store your plaintext password. |
+| `password` | Plaintext password fallback. | Leave this as `""` when using `password_hash`. |
+| `secret` | Random key used to sign browser login sessions. This is not your password and not a password hint. | Generate it with `openssl rand -base64 32`. |
+| `session_ttl_seconds` | How long dashboard login sessions last. | Common values: `3600` = 1 hour, `43200` = 12 hours, `86400` = 24 hours, `604800` = 7 days. |
+
+Generate a password hash:
+
+```sh
+docker exec -it hermes-dashboard python -c 'from plugins.dashboard_auth.basic import hash_password; import getpass; p=getpass.getpass("New dashboard password: "); q=getpass.getpass("Repeat dashboard password: "); assert p == q, "passwords did not match"; print(hash_password(p))'
+```
+
+Generate the session-signing secret:
+
+```sh
+openssl rand -base64 32
+```
+
+Then edit `~/.hermes/config.yaml`:
+
+```yaml
+dashboard:
+  basic_auth:
+    username: "your-username"
+    password_hash: "scrypt$32768$8$1$..."
+    password: ""
+    secret: "paste-output-from-openssl-here"
+    session_ttl_seconds: 43200
+```
+
+Verify that your password matches the stored hash:
+
+```sh
+docker exec -it hermes-dashboard python -c 'from hermes_cli.config import cfg_get, load_config; from plugins.dashboard_auth.basic import _verify_password; import getpass; b=cfg_get(load_config(),"dashboard","basic_auth",default={}); print("username:", b.get("username")); print("password ok:", _verify_password(getpass.getpass("Password to test: "), b.get("password_hash","")))'
+```
+
+Expected output:
+
+```text
+username: your-username
+password ok: True
+```
+
+Restart the dashboard after changing `config.yaml`:
+
+```sh
+dockter-hermes-restart dashboard
+```
+
 
 ## Common Workflows
 
