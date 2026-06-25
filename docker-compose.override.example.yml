@@ -28,7 +28,17 @@ services:
     environment:
       - API_SERVER_ENABLED=true
       - API_SERVER_HOST=127.0.0.1
-    # Optional host workspace mount. Edit or remove.
+    # Optional workspace bind mount. Edit or remove.
+    #
+    # Bind mount format:
+    #   - /path/on/your/computer:/path/inside/docker:rw
+    #
+    # In this example:
+    #   ${HOME}/ai-workspace        = folder on your computer
+    #   /workspace/ai-workspace     = same folder as seen by Hermes in Docker
+    #
+    # Example: ${HOME}/ai-workspace/project-notes.md on your computer is
+    # accessible inside Docker as /workspace/ai-workspace/project-notes.md.
     # volumes:
     #   - ${HOME}/ai-workspace:/workspace/ai-workspace:rw
 
@@ -36,7 +46,17 @@ services:
     network_mode: host
     environment:
       - GATEWAY_HEALTH_URL=http://127.0.0.1:${DOCKTER_HERMES_API_PORT:-8642}/health/detailed
-    # Optional host workspace mount. Edit or remove.
+    # Optional workspace bind mount. Edit or remove.
+    #
+    # Bind mount format:
+    #   - /path/on/your/computer:/path/inside/docker:rw
+    #
+    # In this example:
+    #   ${HOME}/ai-workspace        = folder on your computer
+    #   /workspace/ai-workspace     = same folder as seen by Hermes in Docker
+    #
+    # Example: ${HOME}/ai-workspace/project-notes.md on your computer is
+    # accessible inside Docker as /workspace/ai-workspace/project-notes.md.
     # volumes:
     #   - ${HOME}/ai-workspace:/workspace/ai-workspace:rw
     command: ["dashboard", "--host", "0.0.0.0", "--port", "${DOCKTER_HERMES_DASHBOARD_PORT:-9119}", "--no-open", "--tui"]
