@@ -1,6 +1,12 @@
 # Dockter Hermes
 
-Small shell helpers for running [Hermes Agent](https://github.com/NousResearch/hermes-agent) with Docker Compose.
+If you are like me and want to run [Hermes Agent](https://github.com/NousResearch/hermes-agent) on your computer but don't want to give it barebones access to your computer and want to run it with Docker this project is for you. If you are also like me and also want to be able to access your agent from other computers but are scared of how to properly do it without exposing it to the entire internet this project is also for you as we make it a lot easier to setup with [tailscale](https://github.com/tailscale/tailscale) (ie your own private network on the web.)
+
+This is a both a sample of a docker compose, and a script for common docker commands (so you don't have to memorize long parameter driven docker commands to do the simpliest things for your hermes agent (ie start, stop, rebuild, debug logs, run shell commands in gateway / dashboard, etc.)
+
+And is also a [tailscale](https://github.com/tailscale/tailscale) reverse proxy.
+
+Small shell helpers for running  with Docker Compose.
 
 Dockter Hermes keeps the Hermes checkout untouched. Local machine settings live in `~/.hermes/dockter-hermes`, and the helper composes them with the upstream `docker-compose.yml`.
 
@@ -195,6 +201,7 @@ tailscale serve status
 ```
 
 Before exposing the dashboard beyond localhost, enable Hermes dashboard authentication in `~/.hermes/config.yaml`.
+
 
 ## Common Workflows
 
