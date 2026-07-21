@@ -106,8 +106,8 @@ dockter-hermes-start
 | Command | Description |
 | --- | --- |
 | `dockter-hermes-shell [gateway\|dashboard]` | Open a Bash shell in a container. Defaults to `gateway`. |
-| `dockter-hermes-exec [gateway\|dashboard] <command>` | Run a command inside a running container. Defaults to `gateway`. |
-| `dockter-hermes-cli <args>` | Run `hermes` arguments in a one-off gateway container. |
+| `dockter-hermes-exec [gateway\|dashboard] <command>` | Run a command inside a running container. Defaults to `gateway`, the primary control-plane service. |
+| `dockter-hermes-oneoff <args>` | Run `hermes` arguments in a temporary gateway container created with `docker compose run --rm`; the container stops after the command exits. |
 | `dockter-hermes-chat` | Open interactive Hermes chat through the gateway container. |
 | `dockter-hermes-setup` | Run the Hermes setup wizard in a one-off gateway container. |
 

@@ -139,7 +139,7 @@ run_case shell dockter-hermes-shell gateway
 run_case exec dockter-hermes-exec gateway hermes --version
 run_case exec-default-service dockter-hermes-exec hermes --help
 run_failure_case exec-missing-command dockter-hermes-exec
-run_case cli dockter-hermes-cli hermes --help
+run_case oneoff dockter-hermes-oneoff hermes --help
 run_case chat dockter-hermes-chat
 run_case setup dockter-hermes-setup
 

@@ -435,12 +435,13 @@ dockter-hermes-exec() {
   fi
   if [[ $# -eq 0 ]]; then
     echo -e "Usage: $(_hd_cmd 'dockter-hermes-exec [gateway|dashboard] <command>')"
+    echo -e "       ${_HD_CLR_DIM}Default service: gateway${_HD_CLR_RESET}"
     return 1
   fi
   _dockter_hermes_compose exec "$service" "$@"
 }
 
-dockter-hermes-cli() {
+dockter-hermes-oneoff() {
   _dockter_hermes_compose run --rm gateway "$@"
 }
 
@@ -544,8 +545,8 @@ dockter-hermes-help() {
 
   echo -e "${_HD_CLR_BOLD}${_HD_CLR_MAGENTA}Container Access${_HD_CLR_RESET}"
   echo -e "  $(_hd_cmd dockter-hermes-shell) ${_HD_CLR_CYAN}[gateway|dashboard]${_HD_CLR_RESET}         ${_HD_CLR_DIM}Open a shell in a container${_HD_CLR_RESET}"
-  echo -e "  $(_hd_cmd dockter-hermes-exec) ${_HD_CLR_CYAN}[service] <cmd>${_HD_CLR_RESET}              ${_HD_CLR_DIM}Run a command in a container${_HD_CLR_RESET}"
-  echo -e "  $(_hd_cmd dockter-hermes-cli) ${_HD_CLR_CYAN}<args>${_HD_CLR_RESET}                        ${_HD_CLR_DIM}Run hermes inside a one-off container${_HD_CLR_RESET}"
+  echo -e "  $(_hd_cmd dockter-hermes-exec) ${_HD_CLR_CYAN}[gateway|dashboard] <cmd>${_HD_CLR_RESET}    ${_HD_CLR_DIM}Run a command in a running container (default: gateway)${_HD_CLR_RESET}"
+  echo -e "  $(_hd_cmd dockter-hermes-oneoff) ${_HD_CLR_CYAN}<args>${_HD_CLR_RESET}                     ${_HD_CLR_DIM}Run a one-off Hermes command in a temporary gateway container${_HD_CLR_RESET}"
   echo -e "  $(_hd_cmd dockter-hermes-chat)                         ${_HD_CLR_DIM}Open interactive Hermes chat${_HD_CLR_RESET}"
   echo -e "  $(_hd_cmd dockter-hermes-setup)                        ${_HD_CLR_DIM}Run the setup wizard${_HD_CLR_RESET}"
   echo ""
