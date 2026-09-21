@@ -348,7 +348,60 @@ dockter-hermes-cd() {
   cd "$DOCKTER_HERMES_DIR" || return 1
 }
 
+_dockter_hermes_gateway_running() {
+  [[ -n "$(_dockter_hermes_compose ps --status running -q gateway 2>/dev/null)" ]]
+}
+
+# Runs `hermes config <args>` in the running gateway container, or in a
+# temporary one when the gateway is down. Both share the ~/.hermes bind mount.
+_dockter_hermes_app_config() {
+  if _dockter_hermes_gateway_running; then
+    # No TTY when piped/captured, so $(dockter-hermes-config get model) is clean.
+    if [[ -t 0 && -t 1 ]]; then
+      _dockter_hermes_compose exec gateway hermes config "$@"
+    else
+      _dockter_hermes_compose exec -T gateway hermes config "$@"
+    fi
+  else
+    _dockter_hermes_compose run --rm gateway config "$@"
+  fi
+}
+
 dockter-hermes-config() {
+  case "${1:-}" in
+    "")
+      _dockter_hermes_helper_config
+      ;;
+    -h|--help|help)
+      echo -e "Usage: $(_hd_cmd 'dockter-hermes-config')                      ${_HD_CLR_DIM}Print Dockter Hermes helper config${_HD_CLR_RESET}"
+      echo -e "       $(_hd_cmd 'dockter-hermes-config get [key]')            ${_HD_CLR_DIM}Print a Hermes config value${_HD_CLR_RESET}"
+      echo -e "       $(_hd_cmd 'dockter-hermes-config set <key> <value>')    ${_HD_CLR_DIM}Set a Hermes config value${_HD_CLR_RESET}"
+      echo -e "       $(_hd_cmd 'dockter-hermes-config unset <key>')          ${_HD_CLR_DIM}Remove a Hermes config value${_HD_CLR_RESET}"
+      echo -e "       $(_hd_cmd 'dockter-hermes-config <subcommand>')         ${_HD_CLR_DIM}Any other 'hermes config' subcommand (show, path, check, migrate, ...)${_HD_CLR_RESET}"
+      ;;
+    set)
+      if [[ $# -lt 3 ]]; then
+        echo -e "Usage: $(_hd_cmd 'dockter-hermes-config set <key> <value>')"
+        return 1
+      fi
+      _dockter_hermes_app_config "$@" || return 1
+      echo -e "${_HD_CLR_DIM}Running services may need a restart to pick this up:${_HD_CLR_RESET} $(_hd_cmd 'dockter-hermes-restart all')"
+      ;;
+    unset)
+      if [[ $# -lt 2 ]]; then
+        echo -e "Usage: $(_hd_cmd 'dockter-hermes-config unset <key>')"
+        return 1
+      fi
+      _dockter_hermes_app_config "$@" || return 1
+      echo -e "${_HD_CLR_DIM}Running services may need a restart to pick this up:${_HD_CLR_RESET} $(_hd_cmd 'dockter-hermes-restart all')"
+      ;;
+    *)
+      _dockter_hermes_app_config "$@"
+      ;;
+  esac
+}
+
+_dockter_hermes_helper_config() {
   local config_source
   config_source=$(_dockter_hermes_active_config_source)
   _dockter_hermes_ensure_dir || true
@@ -559,6 +612,9 @@ dockter-hermes-help() {
   echo -e "${_HD_CLR_BOLD}${_HD_CLR_MAGENTA}Config & Navigation${_HD_CLR_RESET}"
   echo -e "  $(_hd_cmd dockter-hermes-cd)                           ${_HD_CLR_DIM}Jump to the Hermes project directory${_HD_CLR_RESET}"
   echo -e "  $(_hd_cmd dockter-hermes-config)                       ${_HD_CLR_DIM}Print Dockter Hermes helper config${_HD_CLR_RESET}"
+  echo -e "  $(_hd_cmd dockter-hermes-config) ${_HD_CLR_CYAN}get [key]${_HD_CLR_RESET}             ${_HD_CLR_DIM}Print a Hermes config value (hermes config get)${_HD_CLR_RESET}"
+  echo -e "  $(_hd_cmd dockter-hermes-config) ${_HD_CLR_CYAN}set <key> <value>${_HD_CLR_RESET}     ${_HD_CLR_DIM}Set a Hermes config value (hermes config set)${_HD_CLR_RESET}"
+  echo -e "  $(_hd_cmd dockter-hermes-config) ${_HD_CLR_CYAN}<subcommand>${_HD_CLR_RESET}          ${_HD_CLR_DIM}Other hermes config subcommands (unset, show, path, check, ...)${_HD_CLR_RESET}"
   echo -e "  $(_hd_cmd dockter-hermes-home)                         ${_HD_CLR_DIM}Jump to the Hermes data directory${_HD_CLR_RESET}"
   echo -e "  $(_hd_cmd dockter-hermes-workspace)                    ${_HD_CLR_DIM}Jump to the Hermes workspace directory${_HD_CLR_RESET}"
   echo -e "  $(_hd_cmd dockter-hermes-show-config)                  ${_HD_CLR_DIM}Print Hermes config with secrets redacted${_HD_CLR_RESET}"

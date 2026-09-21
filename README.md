@@ -124,6 +124,9 @@ dockter-hermes-start
 | --- | --- |
 | `dockter-hermes-cd` | Jump to the Hermes Agent project directory. |
 | `dockter-hermes-config` | Print Dockter Hermes helper config. |
+| `dockter-hermes-config get [key]` | Print a Hermes config value (`hermes config get` inside Docker). |
+| `dockter-hermes-config set <key> <value>` | Set a Hermes config value (`hermes config set` inside Docker). |
+| `dockter-hermes-config <subcommand>` | Any other `hermes config` subcommand: `unset`, `show`, `path`, `check`, `migrate`, ... |
 | `dockter-hermes-home` | Jump to the Hermes data directory. |
 | `dockter-hermes-workspace` | Jump to the Hermes workspace directory. |
 | `dockter-hermes-show-config` | Print Hermes app config and env files with secrets redacted. |
@@ -303,6 +306,16 @@ Print helper config:
 ```sh
 dockter-hermes-config
 ```
+
+Get and set Hermes app config values:
+
+```sh
+dockter-hermes-config get model
+dockter-hermes-config set terminal.backend docker
+dockter-hermes-config unset terminal.backend
+```
+
+These run `hermes config ...` in the running gateway container, or in a temporary container if the gateway is stopped. Restart services after a change with `dockter-hermes-restart all`.
 
 Print Hermes app config with secrets redacted:
 

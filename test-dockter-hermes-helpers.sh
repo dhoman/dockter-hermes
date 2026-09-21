@@ -121,6 +121,12 @@ run_failure_case() {
 
 run_case help dockter-hermes-help
 run_case config dockter-hermes-config
+run_case config-help dockter-hermes-config --help
+run_case config-get dockter-hermes-config get model
+run_case config-set dockter-hermes-config set model.provider test
+run_case config-unset dockter-hermes-config unset model.provider
+run_failure_case config-set-missing-value dockter-hermes-config set model.provider
+run_failure_case config-unset-missing-key dockter-hermes-config unset
 run_case show-config dockter-hermes-show-config
 run_case cd dockter-hermes-cd
 run_case home dockter-hermes-home
