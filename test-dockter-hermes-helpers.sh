@@ -38,6 +38,9 @@ case "$*" in
   *"gateway status --deep"*)
     printf 'gateway ok\n'
     ;;
+  *"--services"*)
+    printf 'gateway\ndashboard\n'
+    ;;
   *"--format"*)
     printf 'NAMES\tIMAGE\tSTATUS\tPORTS\nhermes\thermes-agent\tUp\t9119\n'
     ;;

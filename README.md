@@ -117,7 +117,7 @@ dockter-hermes-start
 dockter-hermes-exec hermes profile create recipe-helper --description "Weeknight dinner ideas"
 ```
 
-Keep the `hermes` in the command, since `exec` runs exactly what you pass it. If the stack is not running, use `dockter-hermes-oneoff` instead and drop the leading `hermes` (for example, `dockter-hermes-oneoff profile list`).
+Keep the `hermes` in the command, since `exec` runs exactly what you pass it. Commands run as your host uid (the same user the gateway runs as), not root; use `dockter-hermes-shell` if you need a root shell. If the stack is not running, use `dockter-hermes-oneoff` instead and drop the leading `hermes` (for example, `dockter-hermes-oneoff profile list`).
 
 ### Dashboard and Health
 
@@ -172,6 +172,7 @@ Useful environment variables:
 | `HERMES_GID` | GID passed into Docker Compose. Defaults to `id -g`. |
 | `DOCKTER_HERMES_DOCKER_BIN` | Docker executable path. Auto-detects common macOS locations. |
 | `DOCKTER_HERMES_DASHBOARD_PORT` | Dashboard port. Defaults to `9119`. |
+| `DOCKTER_HERMES_WAIT_TIMEOUT` | Seconds `dockter-hermes-restart` waits for containers to be running. Defaults to `60`. |
 | `DOCKTER_HERMES_API_PORT` | Gateway API health-check port. Defaults to `8642`. |
 | `DOCKTER_HERMES_GATEWAY_CONTAINER` | Gateway container name for direct `docker exec` health checks. Defaults to `hermes`. |
 | `DOCKTER_HERMES_DASHBOARD_CONTAINER` | Dashboard container name. Defaults to `hermes-dashboard`. |

@@ -240,6 +240,28 @@ _dockter_hermes_compose() {
     "$DOCKTER_HERMES_DOCKER_BIN" compose "${compose_args[@]}" "$@"
 }
 
+# Docker Desktop's macOS file sharing rejects chmod on Unix sockets (EINVAL), so the
+# gateway's control sockets land 0755 and Hermes clients refuse them, e.g. `chat`
+# fails with "Gateway starting: deadline". A chmod from the host side does stick.
+_dockter_hermes_fix_socket_modes() {
+  local hermes_home="${HERMES_HOME:-${HOME}/.hermes}" sock
+  [[ -n "${ZSH_VERSION:-}" ]] && setopt local_options null_glob
+  for sock in "${hermes_home}/gateway.sock" "${hermes_home}"/profiles/*/gateway.sock; do
+    [[ -S "$sock" ]] && chmod 600 "$sock" 2>/dev/null
+  done
+  return 0
+}
+
+# Hermes clients refuse a control socket owned by another uid, so run commands as
+# the same uid the gateway runs as rather than the container's default root.
+_dockter_hermes_exec_as_user() {
+  local uid gid
+  uid=$(_dockter_hermes_uid) || return 1
+  gid=$(_dockter_hermes_gid) || return 1
+  _dockter_hermes_fix_socket_modes
+  _dockter_hermes_compose exec --user "${uid}:${gid}" "$@"
+}
+
 _dockter_hermes_default_service() {
   local service="${1:-gateway}"
   case "$service" in
@@ -310,14 +332,66 @@ dockter-hermes-stop() {
   _dockter_hermes_compose down
 }
 
+_dockter_hermes_spinner_frame() {
+  case $(( $1 % 10 )) in
+    0) printf "⠋" ;; 1) printf "⠙" ;; 2) printf "⠹" ;; 3) printf "⠸" ;; 4) printf "⠼" ;;
+    5) printf "⠴" ;; 6) printf "⠦" ;; 7) printf "⠧" ;; 8) printf "⠇" ;; *) printf "⠏" ;;
+  esac
+}
+
+# Compose leaves its "[+] restart 0/N ... Restarting" block frozen when it exits,
+# so poll until each service is running and redraw that block in place (the
+# cursor sits just below it). Gives up after DOCKTER_HERMES_WAIT_TIMEOUT seconds.
+_dockter_hermes_wait_running() {
+  local timeout="${DOCKTER_HERMES_WAIT_TIMEOUT:-60}"
+  local total=$# tick=0 width=0 service name running done_count lines failed
+  for service in "$@"; do
+    name=$(_dockter_hermes_container_name "$service")
+    (( ${#name} > width )) && width=${#name}
+  done
+
+  while :; do
+    running=" $(_dockter_hermes_compose ps --status running --services "$@" 2>/dev/null | tr '\n' ' ') "
+    done_count=0
+    lines=""
+    failed=0
+    for service in "$@"; do
+      name=$(_dockter_hermes_container_name "$service")
+      if [[ "$running" == *" $service "* ]]; then
+        done_count=$((done_count + 1))
+        lines+=$(printf " ${_HD_CLR_GREEN}✔${_HD_CLR_RESET} Container %-${width}s ${_HD_CLR_GREEN}Started${_HD_CLR_RESET}" "$name")
+      elif (( tick >= timeout * 2 )); then
+        failed=1
+        lines+=$(printf " ${_HD_CLR_RED}✘${_HD_CLR_RESET} Container %-${width}s ${_HD_CLR_RED}Not running after ${timeout}s${_HD_CLR_RESET}" "$name")
+      else
+        lines+=$(printf " ${_HD_CLR_YELLOW}%s${_HD_CLR_RESET} Container %-${width}s Restarting" "$(_dockter_hermes_spinner_frame "$tick")" "$name")
+      fi
+      lines+=$'\n'
+    done
+
+    if [[ -t 2 ]]; then
+      printf "\033[%dA\r\033[K[+] restart %d/%d\n" "$((total + 1))" "$done_count" "$total" >&2
+      printf "%s" "$lines" | while IFS= read -r line; do printf "\r\033[K%s\n" "$line" >&2; done
+    fi
+
+    if (( done_count == total )); then
+      return 0
+    elif (( failed )); then
+      echo -e "Check logs: $(_hd_cmd 'dockter-hermes-logs all')" >&2
+      return 1
+    fi
+    sleep 0.5
+    tick=$((tick + 1))
+  done
+}
+
 dockter-hermes-restart() {
   local service
   service=$(_dockter_hermes_default_service "${1:-gateway}") || return 1
-  if [[ "$service" == "all" ]]; then
-    _dockter_hermes_compose restart gateway dashboard
-  else
-    _dockter_hermes_compose restart "$service"
-  fi
+  local services=("$service")
+  [[ "$service" == "all" ]] && services=(gateway dashboard)
+  _dockter_hermes_compose restart "${services[@]}" || return 1
+  _dockter_hermes_wait_running "${services[@]}"
 }
 
 dockter-hermes-logs() {
@@ -358,9 +432,9 @@ _dockter_hermes_app_config() {
   if _dockter_hermes_gateway_running; then
     # No TTY when piped/captured, so $(dockter-hermes-config get model) is clean.
     if [[ -t 0 && -t 1 ]]; then
-      _dockter_hermes_compose exec gateway hermes config "$@"
+      _dockter_hermes_exec_as_user gateway hermes config "$@"
     else
-      _dockter_hermes_compose exec -T gateway hermes config "$@"
+      _dockter_hermes_exec_as_user -T gateway hermes config "$@"
     fi
   else
     _dockter_hermes_compose run --rm gateway config "$@"
@@ -491,14 +565,16 @@ dockter-hermes-exec() {
     echo -e "       ${_HD_CLR_DIM}Default service: gateway${_HD_CLR_RESET}"
     return 1
   fi
-  _dockter_hermes_compose exec "$service" "$@"
+  _dockter_hermes_exec_as_user "$service" "$@"
 }
 
 dockter-hermes-oneoff() {
+  _dockter_hermes_fix_socket_modes
   _dockter_hermes_compose run --rm gateway "$@"
 }
 
 dockter-hermes-chat() {
+  _dockter_hermes_fix_socket_modes
   _dockter_hermes_compose run --rm gateway chat "$@"
 }
 
