@@ -111,6 +111,14 @@ dockter-hermes-start
 | `dockter-hermes-chat` | Open interactive Hermes chat through the gateway container. |
 | `dockter-hermes-setup` | Run the Hermes setup wizard in a one-off gateway container. |
 
+`dockter-hermes-exec` is the command you will likely use most. Any `hermes` command from the Hermes docs can be run inside the gateway container by prefixing it with `dockter-hermes-exec`:
+
+```sh
+dockter-hermes-exec hermes profile create recipe-helper --description "Weeknight dinner ideas"
+```
+
+Keep the `hermes` in the command, since `exec` runs exactly what you pass it. If the stack is not running, use `dockter-hermes-oneoff` instead and drop the leading `hermes` (for example, `dockter-hermes-oneoff profile list`).
+
 ### Dashboard and Health
 
 | Command | Description |
