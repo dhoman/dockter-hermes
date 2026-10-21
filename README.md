@@ -109,6 +109,7 @@ dockter-hermes-start
 | `dockter-hermes-exec [gateway\|dashboard] <command>` | Run a command inside a running container. Defaults to `gateway`, the primary control-plane service. |
 | `dockter-hermes-oneoff <args>` | Run `hermes` arguments in a temporary gateway container created with `docker compose run --rm`; the container stops after the command exits. |
 | `dockter-hermes-chat` | Open interactive Hermes chat through the gateway container. |
+| `dockter-hermes-profile <name> [args]` | Run `hermes -p <name> [args]` in the gateway container, starting in that profile's `terminal.cwd`. The interactive CLI otherwise ignores `terminal.cwd` and starts wherever it was launched. With no args, it opens the interactive CLI. |
 | `dockter-hermes-setup` | Run the Hermes setup wizard in a one-off gateway container. |
 
 `dockter-hermes-exec` is the command you will likely use most. Any `hermes` command from the Hermes docs can be run inside the gateway container by prefixing it with `dockter-hermes-exec`:

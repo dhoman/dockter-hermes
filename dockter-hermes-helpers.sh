@@ -578,6 +578,28 @@ dockter-hermes-chat() {
   _dockter_hermes_compose run --rm gateway chat "$@"
 }
 
+# The interactive CLI ignores terminal.cwd on the local backend and starts in
+# the launch dir, so cd to the profile's terminal.cwd before starting it.
+dockter-hermes-profile() {
+  if [[ $# -eq 0 || "${1:-}" == -* ]]; then
+    echo -e "Usage: $(_hd_cmd 'dockter-hermes-profile <profile> [hermes args]')"
+    echo -e "       ${_HD_CLR_DIM}Starts Hermes in the profile's terminal.cwd${_HD_CLR_RESET}"
+    return 1
+  fi
+  local profile="$1"
+  shift
+  _dockter_hermes_exec_as_user gateway bash -c '
+    profile="$1"; shift
+    cwd=$(hermes -p "$profile" config get terminal.cwd) || exit 1
+    if [[ -n "$cwd" && "$cwd" != "." ]]; then
+      cd "$cwd" || exit 1
+    else
+      echo "No terminal.cwd set for profile $profile; starting in $PWD" >&2
+    fi
+    exec hermes -p "$profile" "$@"
+  ' _ "$profile" "$@"
+}
+
 dockter-hermes-setup() {
   _dockter_hermes_compose run --rm gateway setup
 }
@@ -677,6 +699,7 @@ dockter-hermes-help() {
   echo -e "  $(_hd_cmd dockter-hermes-exec) ${_HD_CLR_CYAN}[gateway|dashboard] <cmd>${_HD_CLR_RESET}    ${_HD_CLR_DIM}Run a command in a running container (default: gateway)${_HD_CLR_RESET}"
   echo -e "  $(_hd_cmd dockter-hermes-oneoff) ${_HD_CLR_CYAN}<args>${_HD_CLR_RESET}                     ${_HD_CLR_DIM}Run a one-off Hermes command in a temporary gateway container${_HD_CLR_RESET}"
   echo -e "  $(_hd_cmd dockter-hermes-chat)                         ${_HD_CLR_DIM}Open interactive Hermes chat${_HD_CLR_RESET}"
+  echo -e "  $(_hd_cmd dockter-hermes-profile) ${_HD_CLR_CYAN}<name> [args]${_HD_CLR_RESET}       ${_HD_CLR_DIM}Run Hermes for a profile in its terminal.cwd${_HD_CLR_RESET}"
   echo -e "  $(_hd_cmd dockter-hermes-setup)                        ${_HD_CLR_DIM}Run the setup wizard${_HD_CLR_RESET}"
   echo ""
 

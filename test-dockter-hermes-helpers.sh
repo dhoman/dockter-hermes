@@ -150,6 +150,9 @@ run_case exec-default-service dockter-hermes-exec hermes --help
 run_failure_case exec-missing-command dockter-hermes-exec
 run_case oneoff dockter-hermes-oneoff hermes --help
 run_case chat dockter-hermes-chat
+run_case profile dockter-hermes-profile ascii-studio
+run_case profile-args dockter-hermes-profile ascii-studio chat -q hello
+run_failure_case profile-missing-name dockter-hermes-profile
 run_case setup dockter-hermes-setup
 
 run_case dashboard dockter-hermes-dashboard
