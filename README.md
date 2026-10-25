@@ -321,7 +321,7 @@ Get and set Hermes app config values:
 
 ```sh
 dockter-hermes-config get model
-dockter-hermes-config set terminal.backend docker
+dockter-hermes-config set terminal.backend local
 dockter-hermes-config unset terminal.backend
 ```
 
@@ -331,6 +331,19 @@ Print Hermes app config with secrets redacted:
 
 ```sh
 dockter-hermes-show-config
+```
+
+## Common Problems
+
+### Terminal commands fail with `terminal.backend: docker`
+
+Hermes' `docker` terminal backend is meant for running Hermes on your host and sending the agent's commands into a separate Docker sandbox. Dockter Hermes already runs Hermes inside a container, and the default compose setup does not mount the host Docker socket into it, so the agent's `terminal`, file, and `execute_code` tools fail.
+
+Fix: use the `local` backend. Commands then run inside the Hermes container, which is already the sandbox.
+
+```sh
+dockter-hermes-config set terminal.backend local
+dockter-hermes-restart all
 ```
 
 ## Requirements
