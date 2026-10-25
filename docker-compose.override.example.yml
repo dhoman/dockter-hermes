@@ -5,6 +5,7 @@
 # - an optional prefix proxy for Tailscale Serve at /hermes
 # - API server loopback config for gateway health checks
 # - dashboard binding suitable for authenticated reverse-proxy/Tailscale use
+# - temp dir inside the container (needed for execute_code on macOS)
 # - optional workspace bind mounts
 
 services:
@@ -28,6 +29,10 @@ services:
     environment:
       - API_SERVER_ENABLED=true
       - API_SERVER_HOST=127.0.0.1
+      # Hermes defaults temp to /opt/data/cache/scratch, on the macOS bind
+      # mount, where Unix sockets can't be created (execute_code fails with
+      # Errno 22). Keep temp in the container.
+      - TMPDIR=/tmp
     # Optional workspace bind mount. Edit or remove.
     #
     # Bind mount format:
@@ -41,11 +46,19 @@ services:
     # accessible inside Docker as /workspace/ai-workspace/project-notes.md.
     # volumes:
     #   - ${HOME}/ai-workspace:/workspace/ai-workspace:rw
+    #
+    # When you enable the mount above, also add this to environment so the
+    # file tools can write there (the image limits writes to /opt/data):
+    #   - HERMES_WRITE_SAFE_ROOT=/opt/data:/workspace/ai-workspace
 
   dashboard:
     network_mode: host
     environment:
       - GATEWAY_HEALTH_URL=http://127.0.0.1:${DOCKTER_HERMES_API_PORT:-8642}/health/detailed
+      # Hermes defaults temp to /opt/data/cache/scratch, on the macOS bind
+      # mount, where Unix sockets can't be created (execute_code fails with
+      # Errno 22). Keep temp in the container.
+      - TMPDIR=/tmp
     # Optional workspace bind mount. Edit or remove.
     #
     # Bind mount format:
@@ -59,4 +72,8 @@ services:
     # accessible inside Docker as /workspace/ai-workspace/project-notes.md.
     # volumes:
     #   - ${HOME}/ai-workspace:/workspace/ai-workspace:rw
+    #
+    # When you enable the mount above, also add this to environment so the
+    # file tools can write there (the image limits writes to /opt/data):
+    #   - HERMES_WRITE_SAFE_ROOT=/opt/data:/workspace/ai-workspace
     command: ["dashboard", "--host", "0.0.0.0", "--port", "${DOCKTER_HERMES_DASHBOARD_PORT:-9119}", "--no-open", "--tui"]

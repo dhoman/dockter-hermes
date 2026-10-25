@@ -346,6 +346,22 @@ dockter-hermes-config set terminal.backend local
 dockter-hermes-restart all
 ```
 
+### `execute_code` fails with `Errno 22` on macOS
+
+Hermes keeps temp files under `/opt/data/cache/scratch`, which lives on the macOS bind mount. Unix sockets can't be created there, so `execute_code` fails with `OSError: [Errno 22] Invalid argument`.
+
+Fix: set `TMPDIR=/tmp` in the `environment` of both `gateway` and `dashboard` in `docker-compose.override.yml` (the example already does), then run `dockter-hermes-restart all`.
+
+### File tools can't write to a mounted workspace
+
+The Hermes image only allows the file tools to write under `/opt/data`. If you bind mount a workspace such as `/workspace/ai-workspace`, the agent can read it but writes are refused.
+
+Fix: add the workspace to `HERMES_WRITE_SAFE_ROOT` in the `environment` of both `gateway` and `dashboard`, then run `dockter-hermes-restart all`:
+
+```yaml
+      - HERMES_WRITE_SAFE_ROOT=/opt/data:/workspace/ai-workspace
+```
+
 ## Requirements
 
 - Docker with Docker Compose
