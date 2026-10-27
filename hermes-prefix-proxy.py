@@ -21,6 +21,7 @@ import os
 from typing import Iterable
 
 from aiohttp import ClientSession, WSMsgType, web
+from multidict import CIMultiDict
 
 
 PREFIX = os.environ.get("HERMES_PREFIX_PROXY_PREFIX", "/hermes").rstrip("/")
@@ -71,15 +72,16 @@ def request_headers(request: web.Request) -> dict[str, str]:
     return headers
 
 
-def response_headers(items: Iterable[tuple[str, str]]) -> dict[str, str]:
-    out: dict[str, str] = {}
+def response_headers(items: Iterable[tuple[str, str]]) -> CIMultiDict[str]:
+    # Multidict, not dict: login/logout send several Set-Cookie headers.
+    out: CIMultiDict[str] = CIMultiDict()
     for key, value in items:
         lower = key.lower()
         if lower in HOP_BY_HOP or lower == "content-length":
             continue
         if lower == "location" and value.startswith("/") and not value.startswith(PREFIX + "/"):
             value = PREFIX + value
-        out[key] = value
+        out.add(key, value)
     return out
 
 
