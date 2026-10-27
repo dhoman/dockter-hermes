@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+import re
 from typing import Iterable
 
 from aiohttp import ClientSession, WSMsgType, web
@@ -85,7 +86,20 @@ def response_headers(items: Iterable[tuple[str, str]]) -> CIMultiDict[str]:
     return out
 
 
+# Vite's preload helper (base "/") prefixes lazy-chunk deps with "/", which
+# skips the mount prefix, so ChatPage and its xterm CSS 404 behind the proxy.
+VITE_PRELOAD_BASE = re.compile(r"function\((\w+)\)\{return`/`\+\1\}")
+
+
+def rewrite_js(body: bytes) -> bytes:
+    text = body.decode("utf-8", errors="replace")
+    new = VITE_PRELOAD_BASE.sub(lambda m: f"function({m[1]}){{return`{PREFIX}/`+{m[1]}}}", text)
+    return body if new == text else new.encode("utf-8")
+
+
 def rewrite_body(body: bytes, content_type: str) -> bytes:
+    if "javascript" in content_type.lower():
+        return rewrite_js(body)
     if "text/html" not in content_type.lower():
         return body
     text = body.decode("utf-8", errors="replace")
@@ -125,9 +139,13 @@ async def proxy_http(request: web.Request, backend_path: str) -> web.StreamRespo
 async def proxy_ws(request: web.Request, backend_path: str) -> web.WebSocketResponse:
     downstream = web.WebSocketResponse()
     await downstream.prepare(request)
+    # The browser's handshake headers must not leak upstream: a forwarded
+    # permessage-deflate offer gets accepted, but aiohttp didn't negotiate it
+    # and fails the compressed frames with 1002.
+    headers = {k: v for k, v in request_headers(request).items() if not k.lower().startswith("sec-websocket-")}
     async with request.app["client"].ws_connect(
         target_url(request, backend_path),
-        headers=request_headers(request),
+        headers=headers,
     ) as upstream:
         async def client_to_backend() -> None:
             async for msg in downstream:
@@ -151,6 +169,8 @@ async def proxy_ws(request: web.Request, backend_path: str) -> web.WebSocketResp
             {asyncio.create_task(client_to_backend()), asyncio.create_task(backend_to_client())},
             return_when=asyncio.FIRST_COMPLETED,
         )
+        if not downstream.closed and upstream.close_code:
+            await downstream.close(code=upstream.close_code)
     return downstream
 
 
